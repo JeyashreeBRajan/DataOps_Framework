@@ -1,66 +1,50 @@
-name: Run Weather ETL DAG with Soda
+name: Run Weather ETL DAG
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # manual trigger
 
 jobs:
-  run-weather-dag:
+  run-dag:
     runs-on: windows-latest
 
     steps:
-      # 1️⃣ Checkout repository
-      - name: Checkout repo
-        uses: actions/checkout@v3
+      # 1️⃣ Checkout repo
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       # 2️⃣ Setup Python
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.11
+          python-version: "3.11"
 
-      # 3️⃣ Install dependencies, copy DAG, initialize DB, trigger DAG
-      - name: Install Airflow, copy DAG, initialize DB and trigger DAG
-        shell: pwsh
-        env:
-          AIRFLOW_HOME: ${{ github.workspace }}\airflow_home
+      # 3️⃣ Upgrade pip
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip setuptools wheel
+
+      # 4️⃣ Install Apache Airflow with constraints
+      - name: Install Apache Airflow
         run: |
-          # Upgrade pip
-          python -m pip install --upgrade pip
+          pip install "apache-airflow==2.9.3" \
+            --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.9.3/constraints-3.11.txt"
 
-          # Install Airflow and dependencies
-          pip install "pendulum<3"
-          pip install "apache-airflow[all]==2.7.3" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.7.3/constraints-3.11.txt"
-          pip install soda-core
-          pip install -r requirements.txt
-
-          # Create AIRFLOW_HOME and DAGs folder
-          mkdir $Env:AIRFLOW_HOME
-          mkdir $Env:AIRFLOW_HOME\dags
-
-          # Copy the DAG file
-          copy 05_dags\weather_pipeline_dag.py $Env:AIRFLOW_HOME\dags\
-
-          # Initialize Airflow DB
-          python -m airflow db upgrade
-          python -m airflow connections create-default-connections
-
-          # Trigger the Weather DAG
-          python -m airflow dags trigger weather_pipeline
-
-          # Sleep 30 seconds to let DAG start
-          Start-Sleep -Seconds 30
-
-      # 4️⃣ Ensure Soda Reports folder exists
-      - name: Ensure Soda Reports folder exists
-        shell: pwsh
+      # 5️⃣ Create airflow_home and copy DAG
+      - name: Prepare Airflow DAGs folder
         run: |
-          if (-not (Test-Path "./06_Soda_reports")) {
-            mkdir 06_Soda_reports
-          }
+          mkdir airflow_home\dags
+          copy Dataops_framework\05_dags\weather_pipeline_dag.py airflow_home\dags\
 
-      # 5️⃣ Upload Soda Reports as artifacts
-      - name: Upload Soda Reports
+      # 6️⃣ Init Airflow DB
+      - name: Initialize Airflow DB
+        run: python -m airflow db migrate
+
+      # 7️⃣ Trigger the DAG
+      - name: Trigger Weather DAG
+        run: python -m airflow dags trigger weather_pipeline
+
+      # 8️⃣ Upload Soda/Logs artifacts
+      - name: Upload logs
         uses: actions/upload-artifact@v4
         with:
-          name: soda-reports
-          path: ./06_Soda_reports
+          name: airflow-logs
+          path: airflow_home\logs
