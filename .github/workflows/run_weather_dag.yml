@@ -24,6 +24,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install "pendulum<3" apache-airflow==2.7.3
           pip install soda-core
+          pip install flask-session
           pip install -r requirements.txt
 
       # 4️⃣ Set AIRFLOW_HOME
@@ -31,7 +32,7 @@ jobs:
         run: mkdir airflow_home
         shell: powershell
 
-      # 5️⃣ List DAG files (for debugging)
+      # 5️⃣ List DAG folder (for debugging)
       - name: List DAG folder
         run: dir 05_dags
         shell: powershell
@@ -43,11 +44,13 @@ jobs:
           copy 05_dags\weather_pipeline_dag.py airflow_home\dags\
         shell: powershell
 
-      # 7️⃣ Initialize Airflow DB
+      # 7️⃣ Initialize Airflow DB (upgrade + default connections)
       - name: Initialize Airflow
         env:
           AIRFLOW_HOME: ${{ github.workspace }}\airflow_home
-        run: airflow db init
+        run: |
+          airflow db upgrade
+          airflow connections create-default-connections
 
       # 8️⃣ Trigger the Weather DAG
       - name: Trigger Weather DAG
