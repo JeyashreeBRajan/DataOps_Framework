@@ -1,0 +1,57 @@
+import psycopg2
+import json
+import pandas as pd
+
+DB_CONFIG = {
+    "dbname": "weatherdb",
+    "user": "postgres",        # replace with your Postgres user name
+    "password": "Thirupathi$143",  # replace with your Postgres password
+    "host": "localhost",
+    "port": "5432"
+}
+
+def load_weather_to_postgres(input_file="weather_clean.json"):
+    """
+    Loads multiple transformed weather records from JSON into PostgreSQL.
+    """
+    # Read transformed JSON
+    records = []
+    with open(input_file, "r") as f:
+        for line in f:
+            try:
+                records.append(json.loads(line))
+            except json.JSONDecodeError:
+                print(f"❌ Skipping invalid JSON line: {line}")
+
+    if not records:
+        print("⚠️ No records found to load into PostgreSQL")
+        return
+
+    conn = psycopg2.connect(**DB_CONFIG)
+    cursor = conn.cursor()
+
+    insert_query = """
+        INSERT INTO weather (city, country, temperature, humidity, pressure, weather_desc, wind_speed, timestamp)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
+    """
+
+    for record in records:
+        cursor.execute(insert_query, (
+            record["city"],
+            record["country"],
+            record["temperature"],
+            record["humidity"],
+            record["pressure"],
+            record["weather"],      # DB column = weather_desc
+            record["wind_speed"],
+            record["timestamp"]
+        ))
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+    print(f"✅ Inserted {len(records)} weather records into PostgreSQL")
+
+# Example usage
+if __name__ == "__main__":
+    load_weather_to_postgres()

@@ -1,0 +1,14 @@
+# soda_checks.yml
+checks for weather_raw:
+  - row_count > 0
+  - missing_count(city) = 0
+  - missing_count(temperature) < 5
+  - min(temperature) >= -50
+  - max(temperature) <= 60
+
+checks for weather_processed:
+  - row_count > 0
+  - missing_count(city) = 0
+  - missing_count(avg_temperature) = 0
+  - min(avg_temperature) >= -50
+  - max(avg_temperature) <= 60
