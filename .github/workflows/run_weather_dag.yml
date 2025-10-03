@@ -30,7 +30,7 @@ jobs:
       - name: Prepare Airflow DAGs folder
         run: |
           mkdir airflow_home\dags
-          copy Dataops_framework\05_dags\weather_pipeline_dag.py airflow_home\dags\
+          copy 05_dags\weather_pipeline_dag.py airflow_home\dags\
 
       # 6️⃣ Init Airflow DB
       - name: Initialize Airflow DB
