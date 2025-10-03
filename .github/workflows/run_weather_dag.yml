@@ -35,7 +35,7 @@ jobs:
       - name: Copy DAGs
         run: |
           mkdir airflow_home\dags
-          copy Dataops_framework\dags\weather_pipeline_dag.py airflow_home\dags\
+          copy Dataops_framework\05_dags\weather_pipeline_dag.py airflow_home\dags\
         shell: powershell
 
       # 6️⃣ Initialize Airflow DB
