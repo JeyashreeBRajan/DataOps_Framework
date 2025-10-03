@@ -26,21 +26,43 @@ jobs:
           pip install soda-core
           pip install -r requirements.txt
 
-      # 4️⃣ Initialize Airflow DB
+      # 4️⃣ Set AIRFLOW_HOME
+      - name: Set Airflow Home
+        run: mkdir airflow_home
+        shell: powershell
+
+      # 5️⃣ Copy DAGs to AIRFLOW_HOME
+      - name: Copy DAGs
+        run: |
+          mkdir airflow_home\dags
+          copy Dataops_framework\dags\weather_pipeline_dag.py airflow_home\dags\
+        shell: powershell
+
+      # 6️⃣ Initialize Airflow DB
       - name: Initialize Airflow
+        env:
+          AIRFLOW_HOME: ${{ github.workspace }}\airflow_home
         run: airflow db init
 
-      # 5️⃣ Trigger the Weather DAG
+      # 7️⃣ Trigger the Weather DAG
       - name: Trigger Weather DAG
+        env:
+          AIRFLOW_HOME: ${{ github.workspace }}\airflow_home
         run: airflow dags trigger weather_pipeline
 
-      # 6️⃣ Wait a few seconds to let DAG start
+      # 8️⃣ Sleep to let DAG start
       - name: Sleep
-        run: timeout /t 30
+        run: Start-Sleep -Seconds 30
+        shell: powershell
 
-      # 7️⃣ Upload Soda Reports as artifacts
+      # 9️⃣ Ensure Soda Reports folder exists
+      - name: Ensure Soda Reports folder exists
+        run: mkdir 06_Soda_reports
+        shell: powershell
+
+      # 🔟 Upload Soda Reports as artifacts
       - name: Upload Soda Reports
         uses: actions/upload-artifact@v4
         with:
           name: soda-reports
-          path: ./06_Soda_reports  # relative path inside the git repo
+          path: ./06_Soda_reports
