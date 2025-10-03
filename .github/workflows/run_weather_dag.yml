@@ -18,57 +18,47 @@ jobs:
         with:
           python-version: 3.11
 
-      # 3️⃣ Install dependencies (Airflow + Soda + Pendulum)
-      - name: Install dependencies
+      # 3️⃣ Install dependencies, copy DAG, initialize DB, trigger DAG
+      - name: Install Airflow, copy DAG, initialize DB and trigger DAG
+        shell: pwsh
+        env:
+          AIRFLOW_HOME: ${{ github.workspace }}\airflow_home
         run: |
+          # Upgrade pip
           python -m pip install --upgrade pip
+
+          # Install Airflow and dependencies
           pip install "pendulum<3"
           pip install "apache-airflow[all]==2.7.3" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.7.3/constraints-3.11.txt"
           pip install soda-core
           pip install -r requirements.txt
 
-      # 4️⃣ Set AIRFLOW_HOME
-      - name: Set Airflow Home
-        run: mkdir airflow_home
-        shell: powershell
+          # Create AIRFLOW_HOME and DAGs folder
+          mkdir $Env:AIRFLOW_HOME
+          mkdir $Env:AIRFLOW_HOME\dags
 
-      # 5️⃣ List DAG folder (debug)
-      - name: List DAG folder
-        run: dir 05_dags
-        shell: powershell
+          # Copy the DAG file
+          copy 05_dags\weather_pipeline_dag.py $Env:AIRFLOW_HOME\dags\
 
-      # 6️⃣ Copy DAGs to AIRFLOW_HOME
-      - name: Copy DAGs
-        run: |
-          mkdir airflow_home\dags
-          copy 05_dags\weather_pipeline_dag.py airflow_home\dags\
-        shell: powershell
-
-      # 7️⃣ Initialize Airflow DB (upgrade + default connections)
-      - name: Initialize Airflow
-        env:
-          AIRFLOW_HOME: ${{ github.workspace }}\airflow_home
-        run: |
+          # Initialize Airflow DB
           python -m airflow db upgrade
           python -m airflow connections create-default-connections
 
-      # 8️⃣ Trigger Weather DAG
-      - name: Trigger Weather DAG
-        env:
-          AIRFLOW_HOME: ${{ github.workspace }}\airflow_home
-        run: python -m airflow dags trigger weather_pipeline
+          # Trigger the Weather DAG
+          python -m airflow dags trigger weather_pipeline
 
-      # 9️⃣ Sleep to allow DAG to start
-      - name: Sleep
-        run: Start-Sleep -Seconds 30
-        shell: powershell
+          # Sleep 30 seconds to let DAG start
+          Start-Sleep -Seconds 30
 
-      # 🔟 Ensure Soda Reports folder exists
+      # 4️⃣ Ensure Soda Reports folder exists
       - name: Ensure Soda Reports folder exists
-        run: mkdir 06_Soda_reports
-        shell: powershell
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "./06_Soda_reports")) {
+            mkdir 06_Soda_reports
+          }
 
-      # 1️⃣1️⃣ Upload Soda Reports as artifacts
+      # 5️⃣ Upload Soda Reports as artifacts
       - name: Upload Soda Reports
         uses: actions/upload-artifact@v4
         with:
