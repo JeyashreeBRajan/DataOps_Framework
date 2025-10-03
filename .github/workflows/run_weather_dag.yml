@@ -1,7 +1,7 @@
 name: Run Weather ETL DAG with Soda
 
 on:
-  workflow_dispatch:  # allows manual trigger from GitHub UI
+  workflow_dispatch:  # manual trigger from GitHub UI
 
 jobs:
   run-weather-dag:
@@ -31,36 +31,41 @@ jobs:
         run: mkdir airflow_home
         shell: powershell
 
-      # 5️⃣ Copy DAGs to AIRFLOW_HOME
+      # 5️⃣ List DAG files (for debugging)
+      - name: List DAG folder
+        run: dir 05_dags
+        shell: powershell
+
+      # 6️⃣ Copy DAGs to AIRFLOW_HOME
       - name: Copy DAGs
         run: |
           mkdir airflow_home\dags
-          copy Dataops_framework\05_dags\weather_pipeline_dag.py airflow_home\dags\
+          copy 05_dags\weather_pipeline_dag.py airflow_home\dags\
         shell: powershell
 
-      # 6️⃣ Initialize Airflow DB
+      # 7️⃣ Initialize Airflow DB
       - name: Initialize Airflow
         env:
           AIRFLOW_HOME: ${{ github.workspace }}\airflow_home
         run: airflow db init
 
-      # 7️⃣ Trigger the Weather DAG
+      # 8️⃣ Trigger the Weather DAG
       - name: Trigger Weather DAG
         env:
           AIRFLOW_HOME: ${{ github.workspace }}\airflow_home
         run: airflow dags trigger weather_pipeline
 
-      # 8️⃣ Sleep to let DAG start
+      # 9️⃣ Sleep to let DAG start
       - name: Sleep
         run: Start-Sleep -Seconds 30
         shell: powershell
 
-      # 9️⃣ Ensure Soda Reports folder exists
+      # 🔟 Ensure Soda Reports folder exists
       - name: Ensure Soda Reports folder exists
         run: mkdir 06_Soda_reports
         shell: powershell
 
-      # 🔟 Upload Soda Reports as artifacts
+      # 1️⃣1️⃣ Upload Soda Reports as artifacts
       - name: Upload Soda Reports
         uses: actions/upload-artifact@v4
         with:
