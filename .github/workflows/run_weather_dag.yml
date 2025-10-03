@@ -1,14 +1,14 @@
-name: Run Weather ETL DAG
+name: Run Weather ETL DAG with Soda
 
 on:
-  workflow_dispatch:  # allows manual trigger
+  workflow_dispatch:  # allows manual trigger from GitHub UI
 
 jobs:
-  run-dag:
+  run-weather-dag:
     runs-on: windows-latest
 
     steps:
-      # 1️⃣ Checkout repository
+      # 1️⃣ Checkout the repository
       - name: Checkout repo
         uses: actions/checkout@v3
 
@@ -21,6 +21,7 @@ jobs:
       # 3️⃣ Install dependencies
       - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
           pip install apache-airflow==2.7.2
           pip install soda-core
           pip install -r requirements.txt
@@ -29,17 +30,17 @@ jobs:
       - name: Initialize Airflow
         run: airflow db init
 
-      # 5️⃣ Trigger DAG
-      - name: Run Weather DAG
+      # 5️⃣ Trigger the Weather DAG
+      - name: Trigger Weather DAG
         run: airflow dags trigger weather_pipeline
 
-      # 6️⃣ Wait a few seconds to finish
+      # 6️⃣ Wait a few seconds to let DAG start
       - name: Sleep
-        run: timeout /t 20
+        run: timeout /t 30
 
-      # 7️⃣ Upload Soda reports
-      - name: Upload Soda reports
+      # 7️⃣ Upload Soda Reports as artifacts
+      - name: Upload Soda Reports
         uses: actions/upload-artifact@v3
         with:
           name: soda-reports
-          path: C:\Users\BJeyshree\Dataops_framework\06_Soda_reports
+          path: ./06_Soda_reports  # relative path inside the repo
