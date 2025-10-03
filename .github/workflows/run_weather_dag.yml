@@ -1,14 +1,14 @@
 name: Run Weather ETL DAG with Soda
 
 on:
-  workflow_dispatch:  # manual trigger from GitHub UI
+  workflow_dispatch:
 
 jobs:
   run-weather-dag:
     runs-on: windows-latest
 
     steps:
-      # 1️⃣ Checkout the repository
+      # 1️⃣ Checkout repository
       - name: Checkout repo
         uses: actions/checkout@v3
 
@@ -18,7 +18,7 @@ jobs:
         with:
           python-version: 3.11
 
-      # 3️⃣ Install dependencies
+      # 3️⃣ Install dependencies (Airflow + Soda + Pendulum)
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -27,13 +27,12 @@ jobs:
           pip install soda-core
           pip install -r requirements.txt
 
-
       # 4️⃣ Set AIRFLOW_HOME
       - name: Set Airflow Home
         run: mkdir airflow_home
         shell: powershell
 
-      # 5️⃣ List DAG folder (for debugging)
+      # 5️⃣ List DAG folder (debug)
       - name: List DAG folder
         run: dir 05_dags
         shell: powershell
@@ -50,16 +49,16 @@ jobs:
         env:
           AIRFLOW_HOME: ${{ github.workspace }}\airflow_home
         run: |
-          airflow db upgrade
-          airflow connections create-default-connections
+          python -m airflow db upgrade
+          python -m airflow connections create-default-connections
 
-      # 8️⃣ Trigger the Weather DAG
+      # 8️⃣ Trigger Weather DAG
       - name: Trigger Weather DAG
         env:
           AIRFLOW_HOME: ${{ github.workspace }}\airflow_home
-        run: airflow dags trigger weather_pipeline
+        run: python -m airflow dags trigger weather_pipeline
 
-      # 9️⃣ Sleep to let DAG start
+      # 9️⃣ Sleep to allow DAG to start
       - name: Sleep
         run: Start-Sleep -Seconds 30
         shell: powershell
