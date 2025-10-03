@@ -43,4 +43,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: soda-reports
-          path: ./06_Soda_reports  # relative path inside the repo
+          path: ./06_Soda_reports  # relative path inside the git repo
