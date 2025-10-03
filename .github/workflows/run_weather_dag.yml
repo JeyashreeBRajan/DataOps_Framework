@@ -1,0 +1,45 @@
+name: Run Weather ETL DAG
+
+on:
+  workflow_dispatch:  # allows manual trigger
+
+jobs:
+  run-dag:
+    runs-on: windows-latest
+
+    steps:
+      # 1️⃣ Checkout repository
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      # 2️⃣ Setup Python
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      # 3️⃣ Install dependencies
+      - name: Install dependencies
+        run: |
+          pip install apache-airflow==2.7.2
+          pip install soda-core
+          pip install -r requirements.txt
+
+      # 4️⃣ Initialize Airflow DB
+      - name: Initialize Airflow
+        run: airflow db init
+
+      # 5️⃣ Trigger DAG
+      - name: Run Weather DAG
+        run: airflow dags trigger weather_pipeline
+
+      # 6️⃣ Wait a few seconds to finish
+      - name: Sleep
+        run: timeout /t 20
+
+      # 7️⃣ Upload Soda reports
+      - name: Upload Soda reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: soda-reports
+          path: C:\Users\BJeyshree\Dataops_framework\06_Soda_reports
