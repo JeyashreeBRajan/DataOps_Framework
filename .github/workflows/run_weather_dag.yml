@@ -40,7 +40,7 @@ jobs:
 
       # 7️⃣ Upload Soda Reports as artifacts
       - name: Upload Soda Reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: soda-reports
           path: ./06_Soda_reports  # relative path inside the git repo
