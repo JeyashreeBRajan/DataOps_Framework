@@ -25,9 +25,7 @@ jobs:
       # 4️⃣ Install Apache Airflow with constraints
       - name: Install Apache Airflow
         run: |
-          pip install "apache-airflow==2.9.3" \
-            --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.9.3/constraints-3.11.txt"
-
+          pip install "apache-airflow==2.9.3" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.9.3/constraints-3.11.txt"
       # 5️⃣ Create airflow_home and copy DAG
       - name: Prepare Airflow DAGs folder
         run: |
