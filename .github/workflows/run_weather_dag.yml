@@ -1,19 +1,23 @@
 name: Run Weather ETL DAG
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # Allows manual trigger
 
 jobs:
   run-dag:
     runs-on: ubuntu-latest
 
+    env:
+      AIRFLOW_HOME: ${{ github.workspace }}/airflow_home
+      PYTHONPATH: ${{ github.workspace }}
+
     steps:
-      # 1️⃣ Checkout code
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      # 1️⃣ Checkout the repo
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       # 2️⃣ Set up Python
-      - name: Set up Python 3.11
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: 3.11
@@ -23,34 +27,24 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install "apache-airflow==2.9.3" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.9.3/constraints-3.11.txt"
-          pip install pandas numpy psycopg2-binary soda-core
+          pip install pandas numpy psycopg2-binary soda-sql
 
-      # 4️⃣ Set environment variables
-      - name: Set AIRFLOW_HOME and PYTHONPATH
-        run: |
-          export AIRFLOW_HOME=$GITHUB_WORKSPACE/airflow_home
-          export PYTHONPATH=$GITHUB_WORKSPACE:$PYTHONPATH
-          echo "AIRFLOW_HOME=$AIRFLOW_HOME" >> $GITHUB_ENV
-          echo "PYTHONPATH=$PYTHONPATH" >> $GITHUB_ENV
-
-      # 5️⃣ Create airflow_home directories
-      - name: Create DAGs folder
+      # 4️⃣ Create Airflow folders
+      - name: Create Airflow directories
         run: |
           mkdir -p $AIRFLOW_HOME/dags
           mkdir -p $AIRFLOW_HOME/logs
+          mkdir -p $AIRFLOW_HOME/plugins
+          cp -r e_dags/* $AIRFLOW_HOME/dags/
 
-      # 6️⃣ Copy DAGs to airflow_home
-      - name: Copy DAGs
-        run: cp e_dags/*.py $AIRFLOW_HOME/dags/
-
-      # 7️⃣ Initialize Airflow DB
-      - name: Initialize Airflow DB
+      # 5️⃣ Initialize the Airflow DB
+      - name: Initialize Airflow database
         run: airflow db init
 
-      # 8️⃣ List DAGs (verify)
-      - name: List Airflow DAGs
+      # 6️⃣ List all DAGs to check registration
+      - name: List all DAGs
         run: airflow dags list
 
-      # 9️⃣ Trigger the DAG
-      - name: Trigger Weather DAG
+      # 7️⃣ Trigger the DAG
+      - name: Trigger Weather ETL DAG
         run: airflow dags trigger weather_pipeline
