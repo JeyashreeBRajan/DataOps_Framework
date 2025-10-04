@@ -3,6 +3,10 @@ from airflow.operators.python import PythonOperator
 from datetime import datetime, timedelta
 import os
 from soda.scan import Scan
+import sys
+
+# Add root folder to path (important for imports)
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 # Import ETL functions
 from _01_extraction.fetch_weather import fetch_weather_multiple, cities
