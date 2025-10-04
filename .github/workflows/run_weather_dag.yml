@@ -1,56 +1,51 @@
-name: Run Weather ETL DAG with Soda
+name: Run Weather ETL DAG
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # Allows manual trigger
 
 jobs:
-  run-weather-dag:
+  run-dag:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout the repository
-      - name: Checkout repo
+      # 1️⃣ Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Setup Python
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      # 2️⃣ Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: '3.11'
 
       # 3️⃣ Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install "apache-airflow==2.9.3" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.9.3/constraints-3.11.txt"
-          pip install soda-core
-          pip install -r requirements.txt
+          pip install apache-airflow==2.9.3 --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.9.3/constraints-3.11.txt"
+          pip install pandas numpy requests psycopg2-binary soda-core
 
-      # 4️⃣ Create Airflow home and copy DAGs
-      - name: Setup Airflow Home
-        run: |
-          mkdir -p airflow_home/dags
-          cp _05_dags/weather_pipeline_dag.py airflow_home/dags/
-
-      # 5️⃣ Initialize Airflow DB
-      - name: Initialize Airflow
+      # 4️⃣ Set environment variables
+      - name: Set environment variables
         run: |
           export AIRFLOW_HOME=$GITHUB_WORKSPACE/airflow_home
-          python -m airflow db migrate
+          mkdir -p $AIRFLOW_HOME/dags
+          cp _05_dags/weather_pipeline_dag.py $AIRFLOW_HOME/dags/
 
-      # 6️⃣ Trigger the Weather DAG
+      # 5️⃣ Initialize Airflow DB
+      - name: Initialize Airflow DB
+        run: |
+          export AIRFLOW_HOME=$GITHUB_WORKSPACE/airflow_home
+          python -m airflow db init
+
+      # 6️⃣ List DAGs to confirm registration
+      - name: List DAGs
+        run: |
+          export AIRFLOW_HOME=$GITHUB_WORKSPACE/airflow_home
+          python -m airflow dags list
+
+      # 7️⃣ Trigger Weather DAG
       - name: Trigger Weather DAG
         run: |
           export AIRFLOW_HOME=$GITHUB_WORKSPACE/airflow_home
           python -m airflow dags trigger weather_pipeline
-
-      # 7️⃣ Sleep (wait for DAG to run)
-      - name: Sleep
-        run: sleep 30
-
-      # 8️⃣ Upload Soda Reports
-      - name: Upload Soda Reports
-        uses: actions/upload-artifact@v4
-        with:
-          name: soda-reports
-          path: ./_06_Soda_reports
