@@ -26,8 +26,8 @@ jobs:
         run: |
           export AIRFLOW_HOME=$GITHUB_WORKSPACE/airflow_home
           mkdir -p $AIRFLOW_HOME/dags
-          cp -r airflow_home/dags/* $AIRFLOW_HOME/dags/
-          echo "AIRFLOW_HOME is $AIRFLOW_HOME"
+          cp -r _05_airflow_dag/*.py $AIRFLOW_HOME/dags/
+          echo "Copied DAGs to $AIRFLOW_HOME/dags"
           airflow db init
 
       - name: Add repo root to PYTHONPATH
