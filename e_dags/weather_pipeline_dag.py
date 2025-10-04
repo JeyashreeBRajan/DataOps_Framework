@@ -4,13 +4,13 @@ from datetime import datetime, timedelta
 import os
 
 from soda.scan import Scan
-from _01_extraction.fetch_weather import fetch_weather_multiple, cities
-from _02_transform.transform_weather import transform_weather
-from _03_load.load_to_postgres import load_weather_to_postgres
+from a_extraction.fetch_weather import fetch_weather_multiple, cities
+from b_transform.transform_weather import transform_weather
+from c_load.load_to_postgres import load_weather_to_postgres
 
 # --- Paths for Soda ---
-SODA_YML_PATH = r"./_04_dq_checks/weather_checks.yml"
-REPORT_DIR = r"./_06_Soda_reports"
+SODA_YML_PATH = r"./d_dq_checks/weather_checks.yml"
+REPORT_DIR = r"./f_Soda_reports"
 os.makedirs(REPORT_DIR, exist_ok=True)
 
 # --- Default DAG args ---
