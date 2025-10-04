@@ -1,19 +1,19 @@
-name: Run Weather ETL DAG with Soda
+name: Run Weather ETL DAG
 
 on:
-  workflow_dispatch:  # allows manual trigger from GitHub UI
+  workflow_dispatch:
 
 jobs:
-  run-weather-dag:
+  run-dag:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout the repository
-      - name: Checkout repo
-        uses: actions/checkout@v3
+      # 1️⃣ Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      # 2️⃣ Setup Python
-      - name: Setup Python
+      # 2️⃣ Set up Python
+      - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
           python-version: 3.11
@@ -23,47 +23,34 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install "apache-airflow==2.9.3" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.9.3/constraints-3.11.txt"
-          pip install soda-core
-          pip install -r requirements.txt
+          pip install pandas numpy psycopg2-binary soda-core
 
-      # 4️⃣ Set Airflow environment
-      - name: Setup Airflow
+      # 4️⃣ Set environment variables
+      - name: Set AIRFLOW_HOME and PYTHONPATH
         run: |
           export AIRFLOW_HOME=$GITHUB_WORKSPACE/airflow_home
+          export PYTHONPATH=$GITHUB_WORKSPACE:$PYTHONPATH
+          echo "AIRFLOW_HOME=$AIRFLOW_HOME" >> $GITHUB_ENV
+          echo "PYTHONPATH=$PYTHONPATH" >> $GITHUB_ENV
+
+      # 5️⃣ Create airflow_home directories
+      - name: Create DAGs folder
+        run: |
           mkdir -p $AIRFLOW_HOME/dags
-          cp -r $GITHUB_WORKSPACE/e_dags/*.py $AIRFLOW_HOME/dags/
-          echo "PYTHONPATH before: $PYTHONPATH"
-          export PYTHONPATH=$GITHUB_WORKSPACE:$PYTHONPATH
-          echo "PYTHONPATH after: $PYTHONPATH"
+          mkdir -p $AIRFLOW_HOME/logs
 
-      # 5️⃣ Initialize Airflow DB
+      # 6️⃣ Copy DAGs to airflow_home
+      - name: Copy DAGs
+        run: cp e_dags/*.py $AIRFLOW_HOME/dags/
+
+      # 7️⃣ Initialize Airflow DB
       - name: Initialize Airflow DB
-        run: |
-          export AIRFLOW_HOME=$GITHUB_WORKSPACE/airflow_home
-          export PYTHONPATH=$GITHUB_WORKSPACE:$PYTHONPATH
-          airflow db init
+        run: airflow db init
 
-      # 6️⃣ List DAGs (to verify DAG is detected)
+      # 8️⃣ List DAGs (verify)
       - name: List Airflow DAGs
-        run: |
-          export AIRFLOW_HOME=$GITHUB_WORKSPACE/airflow_home
-          export PYTHONPATH=$GITHUB_WORKSPACE:$PYTHONPATH
-          airflow dags list
+        run: airflow dags list
 
-      # 7️⃣ Trigger the Weather DAG
+      # 9️⃣ Trigger the DAG
       - name: Trigger Weather DAG
-        run: |
-          export AIRFLOW_HOME=$GITHUB_WORKSPACE/airflow_home
-          export PYTHONPATH=$GITHUB_WORKSPACE:$PYTHONPATH
-          airflow dags trigger weather_pipeline
-
-      # 8️⃣ Wait a few seconds to let DAG start
-      - name: Sleep
-        run: sleep 30
-
-      # 9️⃣ Upload Soda Reports as artifacts
-      - name: Upload Soda Reports
-        uses: actions/upload-artifact@v4
-        with:
-          name: soda-reports
-          path: ./f_Soda_reports
+        run: airflow dags trigger weather_pipeline
