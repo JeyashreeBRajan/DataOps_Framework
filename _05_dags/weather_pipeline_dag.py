@@ -5,13 +5,13 @@ import os
 from soda.scan import Scan
 
 # Import ETL functions
-from 01_extraction.fetch_weather import fetch_weather_multiple, cities
-from 02_transform.transform_weather import transform_weather
-from 03_load.load_to_postgres import load_weather_to_postgres
+from _01_extraction.fetch_weather import fetch_weather_multiple, cities
+from _02_transform.transform_weather import transform_weather
+from _03_load.load_to_postgres import load_weather_to_postgres
 
 # --- Paths for Soda ---
-SODA_YML_PATH = r"./04_dq_checks/weather_checks.yml"
-REPORT_DIR = r"./06_Soda_reports"
+SODA_YML_PATH = r"./_04_dq_checks/weather_checks.yml"
+REPORT_DIR = r"./_06_Soda_reports"
 os.makedirs(REPORT_DIR, exist_ok=True)
 
 # --- Default DAG args ---
