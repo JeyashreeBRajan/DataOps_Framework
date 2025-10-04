@@ -22,14 +22,18 @@ jobs:
         with:
           python-version: 3.11
 
-      # 3️⃣ Install dependencies
+      # 3️⃣ Upgrade pip and install Cython first
+      - name: Upgrade pip and install build tools
+        run: |
+          python -m pip install --upgrade pip setuptools wheel Cython
+
+      # 4️⃣ Install Airflow + dependencies
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
           pip install "apache-airflow==2.9.3" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.9.3/constraints-3.11.txt"
           pip install pandas numpy psycopg2-binary soda-sql
 
-      # 4️⃣ Create Airflow folders
+      # 5️⃣ Create Airflow directories and copy DAGs
       - name: Create Airflow directories
         run: |
           mkdir -p $AIRFLOW_HOME/dags
@@ -37,14 +41,14 @@ jobs:
           mkdir -p $AIRFLOW_HOME/plugins
           cp -r e_dags/* $AIRFLOW_HOME/dags/
 
-      # 5️⃣ Initialize the Airflow DB
+      # 6️⃣ Initialize Airflow database
       - name: Initialize Airflow database
         run: airflow db init
 
-      # 6️⃣ List all DAGs to check registration
+      # 7️⃣ List all DAGs to ensure registration
       - name: List all DAGs
         run: airflow dags list
 
-      # 7️⃣ Trigger the DAG
+      # 8️⃣ Trigger the Weather ETL DAG
       - name: Trigger Weather ETL DAG
         run: airflow dags trigger weather_pipeline
